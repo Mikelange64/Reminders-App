@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Request, status, Depends
+from fastapi import FastAPI, HTTPException, Request, status, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
@@ -15,7 +15,6 @@ from typing import Annotated
 from database import engine, get_db, Base
 from models import User, Task
 from routers import users, tasks, workspaces
-
 
 
 Base.metadata.create_all(bind=engine)

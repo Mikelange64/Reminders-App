@@ -29,14 +29,14 @@ class User(Base) :
     )
     workspaces : Mapped[list[Workspace]] = relationship(
         secondary=user_workspace,
-        back_populates="member"
+        back_populates="members"
     )
 
     @property
     def get_image_path(self):
         if not self.image_path:
             return "/static/defaults/default_profile_picture.jpg"
-        return self.image_path
+        return f"/media/profile_pics/{self.image_path}"
 
 
 class Task(Base) :
@@ -83,6 +83,7 @@ class Workspace(Base):
     id          : Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title       : Mapped[str] = mapped_column(String(50), nullable=False)
     description : Mapped[str] = mapped_column(Text, nullable=False)
+    max_number  : Mapped[int] = mapped_column(Integer, default=None)
 
     members : Mapped[list[User]] = relationship(
         secondary=user_workspace,
@@ -94,7 +95,7 @@ class Workspace(Base):
         DateTime(timezone=True),
         default = lambda : datetime.now(UTC),
     )
-    due_date : Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
+    due_date : Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, default=None)
 
     @property
     def default_due_date(self):
