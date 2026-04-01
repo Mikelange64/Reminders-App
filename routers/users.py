@@ -1,19 +1,23 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from datetime import timedelta
 
-from sqlalchemy import func, select
-from sqlalchemy.orm import Session, selectinload
+from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi.security import OAuth2PasswordRequestForm
+
+from sqlalchemy import func, select, or_
+from sqlalchemy.orm import Session
 
 from typing import Annotated
 
 from database import get_db
 from models import User, Task
-from schemas import UserCreate, UserPublic, UserPrivate, UserUpdate, ChangePassword, TaskResponse
+from schemas import UserCreate, UserPublic, UserPrivate, UserUpdate, ChangePassword, TaskResponse, Token
+from auth import verify_password, hash_password, create_access_token
+from config import settings
 
 router = APIRouter()
 
 @router.post("", response_model=UserPrivate, status_code=status.HTTP_201_CREATED)
 def create_user(user: UserCreate, db: Annotated[Session, Depends(get_db)]):
-    # db = database | going into the dabatase, and look for User
     email_result = db.execute(select(User).where(func.lower(User.email) == user.email.lower()))
     username_result = db.execute(select(User).where(func.lower(User.username) == user.username))
 
@@ -36,6 +40,33 @@ def create_user(user: UserCreate, db: Annotated[Session, Depends(get_db)]):
     db.commit()
     db.refresh(new_user)
     return new_user
+
+
+@router.get("/login", response_model=Token)
+def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends], db: Annotated[Session, Depends]):
+    # here we use the form data username field to accept either email or username, so the user has a choice
+    search_term = form_data.username.lower()
+    query = select(User).where(
+            or_(
+                func.lower(User.email) == search_term,
+                func.lower(User.username) == search_term
+            )
+    )
+    result = db.execute(query)
+    user = result.scalars().first()
+
+    if not user or not verify_password(form_data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incorrect password or email/username",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    access_token = create_access_token(
+        data = {"sub" : str(user.id)},
+        expired_delta=access_token_expires,
+    )
+    return Token(access_token=access_token, token_type="bearer")
 
 
 @router.get("/all")

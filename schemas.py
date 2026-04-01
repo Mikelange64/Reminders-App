@@ -116,3 +116,12 @@ class WorkspaceUpdate(WorkspaceBase):
     max_number   : int | None = None
     due_date     : datetime | None = None
     is_completed : bool | None = None
+
+
+# ======================================================================================================================
+# TOKEN SCHEMAS
+# ======================================================================================================================
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

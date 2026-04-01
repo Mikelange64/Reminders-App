@@ -28,3 +28,7 @@ htmlcov/
 # --- OS Specific ---
 .DS_Store
 Thumbs.db
+
+
+# --- Personal Notes ---
+Notes.md

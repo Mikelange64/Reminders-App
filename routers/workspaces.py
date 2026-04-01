@@ -71,6 +71,7 @@ def get_tasks(workspace_id: int, db: Annotated[Session, Depends(get_db)]):
 
     return workspace.tasks
 
+
 @router.patch("/add-user/{workspace_id}/{user_id}", response_model=WorkspaceResponse)
 def add_user(workspace_id: int, user_id: int, db: Annotated[Session, Depends(get_db)]):
     result = db.execute(
